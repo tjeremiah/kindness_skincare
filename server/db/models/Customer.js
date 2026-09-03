@@ -2,11 +2,35 @@ const Sequelize = require('sequelize');
 const db = require('../database');
 
 const Customer = db.define('customer', {
-  firstname: Sequelize.String,
-  lastname: Sequelize.String,
-  username: Sequelize.String,
-  address: Sequelize.String,
+  firstname: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },
 
+  lastname: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },
+
+  username: {
+    type: Sequelize.STRING,
+    allowNull: false,
+    unique: true,
+  },
+
+  address: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },
+
+  email: {
+    type: Sequelize.STRING,
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true,
+    },
+  },  
 });
 
 module.exports = Customer;
