@@ -60,6 +60,12 @@ app.post('/api/products', async (req, res) => {
          error: 'Name, price, stock, and description are required', 
       });
     }
+
+    if (typeof price !== 'number' || price <= 0 ) {
+      return res.status(400).json({
+        error: 'Price must be a positive number',
+      });
+    }
     
     const product = await Product.create({
       name,
