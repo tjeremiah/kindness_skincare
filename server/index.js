@@ -54,16 +54,32 @@ app.get('/api/products/:id', async (req, res) => {
 app.post('/api/products', async (req, res) => {
   try {
     const { name, price, stock, description } = req.body;
-
+    
+    // Required fields
     if (!name || price === undefined || stock === undefined || !description) {
       return res.status(400).json({
          error: 'Name, price, stock, and description are required', 
       });
     }
 
+    // Name and description validation
+    if (name.trim() === '' || description.trim() === '') {
+      return res.status(400).json({
+        error: 'Name and description cannot be empty',
+      });
+    }
+
+    // Price validation
     if (typeof price !== 'number' || price <= 0 ) {
       return res.status(400).json({
         error: 'Price must be a positive number',
+      });
+    }
+
+    // Stock validation
+    if (!Number.isInteger(stock) || stock < 0 ) {
+      return res.status(400).json({
+        error: 'Stock must be a whole number that is 0 or greater',
       });
     }
     
@@ -89,13 +105,29 @@ app.put('/api/products/:id', async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id);
 
+    // Check if product exists
     if (!product) {
         return res.status(404).json({
           error: 'Product not found',
         });
     }
 
-    await product.update(req.body);
+    // Get product fields from request body
+    const { name, price, stock, description} = req.body;
+
+    // Required Fields
+    if (!name || price === undefined || stock === undefined || !description) {
+      return res.status(400).json({
+        error: 'Name, price, stock, and description are required',
+      });
+    }
+    // Update product
+    await product.update({
+      name,
+      price,
+      stock,
+      description,
+    });
 
     res.json(product);
   } catch (error) {
