@@ -121,6 +121,28 @@ app.put('/api/products/:id', async (req, res) => {
         error: 'Name, price, stock, and description are required',
       });
     }
+
+    // Name and description validation
+    if (name.trim() === '' || description.trim() === '') {
+      return res.status(400).json({
+        error: 'Name and description cannot be empty'
+      });
+    }
+
+    // Price validation
+    if (typeof price !== 'number' || price <= 0) {
+      return res.status(400).json({
+        error: 'Price must be a positive number',
+      });
+    }
+
+    // Stock validation
+    if (!Number.isInteger(stock) || stock < 0 ) {
+      return res.status(400).json({
+        error: 'Stock must be a whole number that is 0 or greater',
+      });
+    }
+
     // Update product
     await product.update({
       name,
