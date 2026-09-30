@@ -1,5 +1,5 @@
 const express = require('express');
-const { db, Product } = require('./db');
+const { db, Product, Customer } = require('./db');
 
 const app = express();
 
@@ -47,6 +47,78 @@ app.get('/api/products/:id', async (req, res) => {
       error: 'Failed to fetch product',
     });
 
+  }
+});
+
+// Get all customers
+app.get('/api/customers', async (req, res) => {
+  try {
+    const customers = await Customer.findAll();
+
+    res.json(customers); //send back to postman as JSON
+  } catch (error) {
+    console.error('❌ Error fetching customers:', error);
+
+    res.status(500).json({
+      error: 'Failed to fetch customer',
+    });
+  }
+});
+
+// Get one customer
+app.get('/api/customers/:id', async (req, res) => {
+  try {
+    const customer = await Customer.findByPk(req.params.id);
+
+    if (!customer) {
+      return res.status(404).json({
+        error: 'Customer not found',
+      });
+    }
+    
+    res.json(customer);
+  } catch (error) {
+    console.error('❌ Error fetching customer:', error);
+
+    res.status(500).json({
+      error: 'Failed to fetch customer',
+    });
+  }
+});
+
+// Post customer
+app.post('/api/customers', async (req, res) => {
+  try {
+    const {firstname, lastname, username, address, email} = req.body;
+
+    // Required fields
+    if (!firstname || !lastname || !username || !address || !email) {
+      return res.status(400).json({
+        error: 'Firstname, lastname, username, address, and email are required',
+      });
+    }
+
+    const customer = await Customer.create({
+      firstname,
+      lastname,
+      username,
+      address,
+      email,
+    });
+    
+    res.status(201).json(customer);
+  } catch (error) {
+    console.error('❌ Error creating customer:', error);
+
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        error: error.message,
+      });
+    }
+
+    res.status(500).json({
+      error: 'Failed to create customer',
+    });
   }
 });
 
@@ -98,7 +170,7 @@ app.post('/api/products', async (req, res) => {
       error: 'Failed to create product',
     });
   }
-});
+})
 
 // PUT product
 app.put('/api/products/:id', async (req, res) => {
@@ -143,6 +215,7 @@ app.put('/api/products/:id', async (req, res) => {
       });
     }
 
+           
     // Update product
     await product.update({
       name,
