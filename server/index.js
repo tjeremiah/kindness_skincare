@@ -13,6 +13,10 @@ app.get('/', (req, res) => {
   res.send('Kindness Skincare API is running!');
 });
 
+// ====================
+// PRODUCT ROUTES
+// ====================
+
 // Get all products
 app.get('/api/products', async (req, res) => {
   try {
@@ -47,78 +51,6 @@ app.get('/api/products/:id', async (req, res) => {
       error: 'Failed to fetch product',
     });
 
-  }
-});
-
-// Get all customers
-app.get('/api/customers', async (req, res) => {
-  try {
-    const customers = await Customer.findAll();
-
-    res.json(customers); //send back to postman as JSON
-  } catch (error) {
-    console.error('❌ Error fetching customers:', error);
-
-    res.status(500).json({
-      error: 'Failed to fetch customer',
-    });
-  }
-});
-
-// Get one customer
-app.get('/api/customers/:id', async (req, res) => {
-  try {
-    const customer = await Customer.findByPk(req.params.id);
-
-    if (!customer) {
-      return res.status(404).json({
-        error: 'Customer not found',
-      });
-    }
-    
-    res.json(customer);
-  } catch (error) {
-    console.error('❌ Error fetching customer:', error);
-
-    res.status(500).json({
-      error: 'Failed to fetch customer',
-    });
-  }
-});
-
-// Post customer
-app.post('/api/customers', async (req, res) => {
-  try {
-    const {firstname, lastname, username, address, email} = req.body;
-
-    // Required fields
-    if (!firstname || !lastname || !username || !address || !email) {
-      return res.status(400).json({
-        error: 'Firstname, lastname, username, address, and email are required',
-      });
-    }
-
-    const customer = await Customer.create({
-      firstname,
-      lastname,
-      username,
-      address,
-      email,
-    });
-    
-    res.status(201).json(customer);
-  } catch (error) {
-    console.error('❌ Error creating customer:', error);
-
-    if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({
-        error: error.message,
-      });
-    }
-
-    res.status(500).json({
-      error: 'Failed to create customer',
-    });
   }
 });
 
@@ -258,6 +190,171 @@ app.delete('/api/products/:id', async (req, res) => {
     });
   }
 });
+
+// ====================
+// CUSTOMER ROUTES
+// =====================
+
+// Get all customers
+app.get('/api/customers', async (req, res) => {
+  try {
+    const customers = await Customer.findAll();
+
+    res.json(customers); //send back to postman as JSON
+  } catch (error) {
+    console.error('❌ Error fetching customers:', error);
+
+    res.status(500).json({
+      error: 'Failed to fetch customer',
+    });
+  }
+});
+
+// Get one customer
+app.get('/api/customers/:id', async (req, res) => {
+  try {
+    const customer = await Customer.findByPk(req.params.id);
+
+    if (!customer) {
+      return res.status(404).json({
+        error: 'Customer not found',
+      });
+    }
+    
+    res.json(customer);
+  } catch (error) {
+    console.error('❌ Error fetching customer:', error);
+
+    res.status(500).json({
+      error: 'Failed to fetch customer',
+    });
+  }
+});
+
+// Post customer
+app.post('/api/customers', async (req, res) => {
+  try {
+    const {firstname, lastname, username, address, email} = req.body;
+
+    // Required fields
+    if (!firstname || !lastname || !username || !address || !email) {
+      return res.status(400).json({
+        error: 'Firstname, lastname, username, address, and email are required',
+      });
+    }
+
+    const customer = await Customer.create({
+      firstname,
+      lastname,
+      username,
+      address,
+      email,
+    });
+    
+    res.status(201).json(customer);
+  } catch (error) {
+    console.error('❌ Error creating customer:', error);
+
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        error: error.message,
+      });
+    }
+
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({
+        error: 'Username already exists',
+      });
+    }
+
+    res.status(500).json({
+      error: 'Failed to create customer',
+    });
+  }
+});
+
+// Put Customer
+app.put('/api/customers/:id', async (req, res) => {
+  try {
+    const customer = await Customer.findByPk(req.params.id);
+
+    // Check if customer exists
+    if (!customer) {
+      return res.status(404).json({
+        error: 'Customer not found',
+      });
+    }
+
+    // Get customer fields from request body
+    const { firstname, lastname, username, address, email } = req.body;
+
+    // Required fields
+    if (!firstname || !lastname || !username || !address || !email ) {
+      return res.status(400).json({
+        error: 'Firstname, lastname, username, address, and email are required'
+      });
+    }
+
+    // Update customer
+    await customer.update({
+      firstname,
+      lastname,
+      username,
+      address,
+      email,
+    });
+
+    res.json(customer); //send back to postman in json format
+  } catch (error) {
+    console.error('❌ Error updating customer:', error);
+
+    if (error.name === 'SequelizeValidationError' ) {
+      return res.status(400).json({
+        error: error.message,
+      });
+    }
+
+    if (error.name === 'SequelizeUniqueConstraintError') {
+       return res.status(400).json({
+        error: 'Username already exists',
+       }); 
+    }
+
+    res.status(500).json({
+      error: 'Failed to update customer',
+    });
+
+  }
+});
+
+app.delete('/api/customers/:id', async (req, res) => {
+  try {
+    const customer = await Customer.findByPk(req.params.id);
+
+    // Check if customer exists
+    if (!customer) {
+      return res.status(404).json({
+        error: 'Customer not found',
+      });
+    }
+
+    // Delete customer
+    await customer.destroy();
+
+    res.json({
+      message: 'Customer deleted successfully',
+    });
+  } catch (error) {
+    console.error('❌ Error deleting customer:', error);
+
+    res.status(500).json({
+      error: 'Failed to delete customer',
+    });
+
+  }
+});
+
+
 
 // Start server
 const startServer = async () => {
