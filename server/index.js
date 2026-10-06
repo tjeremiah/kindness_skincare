@@ -381,7 +381,10 @@ app.get('/api/customers/:id/orders', async (req, res) => {
 app.get('/api/orders/:id/customer', async (req, res) => {
   try {
     const order = await Order.findByPk(req.params.id, {
-      include: Customer,
+      include:  {
+        model: Customer,
+        attributes: ['firstname', 'lastname', 'email'],
+      }, 
     });
 
     if (!order) {
