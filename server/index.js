@@ -357,7 +357,9 @@ app.delete('/api/customers/:id', async (req, res) => {
 // Get all orders for a customer
 app.get('/api/customers/:id/orders', async (req, res) => {
   try {
-    const customer = await Customer.findByPk(req.params.id);
+    const customer = await Customer.findByPk(req.params.id, {
+      include: Order,
+    });
 
     if (!customer) {
       return res.status(404).json({
@@ -365,13 +367,7 @@ app.get('/api/customers/:id/orders', async (req, res) => {
       });
     }
 
-    const orders = await Order.findAll({
-      where: {
-        customerId: req.params.id,
-      },
-    });
-
-    res.json(orders);
+    res.json(customer);
   } catch (error) {
     console.error('❌ Error fetching customer orders:', error);
 
