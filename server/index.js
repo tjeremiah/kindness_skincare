@@ -1,5 +1,5 @@
 const express = require('express');
-const { db, Product, Customer } = require('./db');
+const { db, Product, Customer, Order } = require('./db');
 
 const app = express();
 
@@ -354,6 +354,61 @@ app.delete('/api/customers/:id', async (req, res) => {
   }
 });
 
+// Get all orders for a customer
+app.get('/api/customers/:id/orders', async (req, res) => {
+  try {
+    const customer = await Customer.findByPk(req.params.id);
+
+    if (!customer) {
+      return res.status(404).json({
+        error: 'Customer not found',
+      });
+    }
+
+    const orders = await Order.findAll({
+      where: {
+        customerId: req.params.id,
+      },
+    });
+
+    res.json(orders);
+  } catch (error) {
+    console.error('❌ Error fetching customer orders:', error);
+
+    res.status(500).json({
+      error: 'Failed to fetch customer orders',
+    });
+  }
+});
+
+// Get Customer for an order
+app.get('/api/orders/:id/customer', async (req, res) => {
+  try {
+    const order = await Order.findByPk(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        error: 'Order not found',
+      });
+    }
+
+    const customer = await Customer.findByPk(order.customerId);
+
+    if (!customer) {
+      return res.status(404).json({
+        error: 'Customer not found',
+      });
+    }
+
+    res.json(customer);
+  } catch (error) {
+    console.error('❌ Error fetching order customer:', error);
+
+    res.status(500).json({
+      error: 'Failed to fetch order customer',
+    });
+  }
+});
 
 
 // Start server
