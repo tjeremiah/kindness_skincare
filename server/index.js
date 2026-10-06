@@ -384,7 +384,9 @@ app.get('/api/customers/:id/orders', async (req, res) => {
 // Get Customer for an order
 app.get('/api/orders/:id/customer', async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id);
+    const order = await Order.findByPk(req.params.id, {
+      include: Customer,
+    });
 
     if (!order) {
       return res.status(404).json({
@@ -392,15 +394,7 @@ app.get('/api/orders/:id/customer', async (req, res) => {
       });
     }
 
-    const customer = await Customer.findByPk(order.customerId);
-
-    if (!customer) {
-      return res.status(404).json({
-        error: 'Customer not found',
-      });
-    }
-
-    res.json(customer);
+    res.json(order);
   } catch (error) {
     console.error('❌ Error fetching order customer:', error);
 
