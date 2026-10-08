@@ -450,6 +450,39 @@ app.get('/api/orders/:id', async (req, res) => {
   }
 });
 
+// Get one product with its transactions and orders
+app.get('/api/products/:id/transactions', async (req, res) => {
+  try {
+    const product = await Product.findByPk(req.params.id, {
+      attributes: ['id', 'name', 'price'],
+
+      include: {
+        model: Transaction,
+        attributes: ['id', 'quantity', 'status'],
+      
+        include: {
+          model: Order,
+          attributes: ['id', 'date', 'status'],
+        },
+      },
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        error: 'Product not found',
+      });
+    }
+
+    res.json(product);
+  } catch (error) {
+    console.error('❌ Error fetching product transactions:', error);
+
+    res.status(500).json({
+      error: 'Failed to fetch product transactions'
+    });
+  }
+});
+
 
 // Start server
 const startServer = async () => {
