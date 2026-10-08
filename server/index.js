@@ -1,5 +1,5 @@
 const express = require('express');
-const { db, Product, Customer, Order } = require('./db');
+const { db, Product, Customer, Order, Transaction, Payment } = require('./db');
 
 const app = express();
 
@@ -400,6 +400,52 @@ app.get('/api/orders/:id/customer', async (req, res) => {
 
     res.status(500).json({
       error: 'Failed to fetch order customer',
+    });
+  }
+});
+
+// Get one order with its transactions and products
+app.get('/api/orders/:id', async (req, res) => {
+  try {
+    const order = await Order.findByPk(req.params.id, {
+      attributes: ['id', 'date', 'status'],
+      // When you find this order get its Customer and Transaction
+      include: [
+        {
+          model: Customer,
+          attributes: ['firstname', 'lastname', 'email'],
+        },
+        {
+          model: Transaction,
+          attributes: ['id', 'quantity', 'status'],
+        
+          // For each Transaction, also get its Product and Payment
+          include: [
+            {
+              model: Product,
+              attributes: ['name', 'price'],
+           },
+           {
+              model: Payment,
+              attributes: ['amount', 'method', 'date'],
+           },   
+         ],
+        },
+      ], 
+    });  
+    
+    if (!order) {
+      return res.status(404).json({
+        error: 'Order not found',
+      });
+    }
+
+    res.json(order);
+  } catch (error) {
+    console.error('❌ Error fetching order:', error)
+
+    res.status(500).json({
+      error: 'Failed to fetch order',
     });
   }
 });
