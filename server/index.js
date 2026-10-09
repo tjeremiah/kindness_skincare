@@ -191,6 +191,41 @@ app.delete('/api/products/:id', async (req, res) => {
   }
 });
 
+// Get completed transactions for one product
+app.get('/api/products/:id/completed-transactions', async (req, res) => {
+  try {
+    const product = await Product.findByPk(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        error: 'Product not found',
+      });
+    }
+
+    const transactions = await Transaction.findAll({
+      where: {
+        productId: product.id,
+        status: 'completed',
+      },
+      attributes: ['id', 'quantity', 'status'],
+      include: {
+        model: Order,
+        attributes: ['id', 'date', 'status'],
+      },
+      order: [['id', 'DESC']],
+      limit: 5,
+    });
+
+    res.json(transactions);
+  } catch (error) {
+    console.error('❌ Error fetching completed transactions:', error);
+
+    res.status(500).json({
+      error: 'Failed to fetch completed transaction',
+    });
+  }
+});
+
 // ====================
 // CUSTOMER ROUTES
 // =====================
