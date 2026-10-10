@@ -1,4 +1,5 @@
 const express = require('express');
+const { op } = require('sequelize');
 const { db, Product, Customer, Order, Transaction, Payment } = require('./db');
 
 const app = express();
@@ -31,6 +32,57 @@ app.get('/api/products', async (req, res) => {
     });  
   }
 });
+
+/* 
+* Get /api/products/paginated?page=1&limit=10
+* Return products one page at a time.
+*/
+app.get('/api/products/paginated', async (req, res) => {
+  try {
+     // 1. Read the page and limit from the URL.
+     const page = Number(req.query.page ?? 1);
+     const limit = Number(req.query.limit ?? 10);
+
+     // 2. Validate the query parameters.
+     if (
+      !Number.isInteger(page) ||
+      !Number.isInteger(limit) ||
+      page < 1 ||
+      limit < 1 ||
+      limit > 100
+     ) {
+      return res.status(400).json({
+        error: 'Page must be positive, and limit must be between 1 and 100.'
+      });
+     }
+
+     // 3. Calculate how many products to skip.
+     const offset = (page - 1) * limit;
+
+     // 4. Fetch the requested page and count all products.
+     const result = await Product.findAndCountAll({
+      limit,
+      offset,
+      order: [['id', 'ASC']],
+     });
+
+     // 5. Return the products and pagination information.
+     res.json({
+      page,
+      limit,
+      total: result.count,
+      totalPages: Math.ceil(result.count / limit),
+      products: result.rows,
+     });
+  } catch (error) {
+    console.error('Error fetching pagination products:', error);
+    
+    res.status(500).json({
+      error: 'Failed to fetch products',
+    });
+  }
+});
+
 
 // GET one product
 app.get('/api/products/:id', async (req, res) => {
