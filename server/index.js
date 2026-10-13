@@ -1,5 +1,5 @@
 const express = require('express');
-const { op } = require('sequelize');
+const { Op } = require('sequelize');
 const { db, Product, Customer, Order, Transaction, Payment } = require('./db');
 
 const app = express();
@@ -83,6 +83,102 @@ app.get('/api/products/paginated', async (req, res) => {
   }
 });
 
+/*
+* GET /api/products/search?name=Lotion
+* Optional filters: minPrice, maxPrice,
+*/
+
+app.get('/api/products/search', async (req, res) => {
+  try {
+    const { name, minPrice, maxPrice, inStock } = req.query;
+    
+    // Build the database filters.
+    const where = {};
+
+    // Search product names, ignoring letter case.
+    if (name !== undefined) {
+      if (name.trim() === '') {
+        return res.status(400).json({
+          error: 'Search name cannot be empty'
+        });
+      }
+
+      where.name = {
+        [Op.iLike]: `%${name.trim()}%`,
+      };
+    }
+
+    // Filter by minimum price.
+    if (minPrice !== undefined) {
+      const minimum = Number(minPrice);
+
+      if (!Number.isFinite(minimum) || minimum < 0) {
+        return res.status(400).json({
+          error: 'minPrice must be a non-negative number',
+        });
+      }
+
+      where.price = {
+        ...where.price,
+        [Op.gte]: minimum,
+      };
+    }
+
+    // Filter by maximum price.
+    if (maxPrice !== undefined) {
+      const maximum = Number(maxPrice);
+
+      if (!Number.isFinite(maximum) || maximum < 0 ) {
+        return res.status(400).json({
+          error: 'maxPrice must be a non-negative number',
+        });
+      }
+
+      where.price = {
+        ...where.price,
+        [Op.lte]: maximum,
+      };
+    }
+
+    // Check that the price range is sensible.
+    if (
+      where.price?.[Op.gte] !== undefined &&
+      where.price?.[Op.lte] !== undefined &&
+      where.price[Op.gte] > where.price[Op.lte]
+    ) {
+      return res.status(400).json({
+        error: 'minPrice cannot be greater than maxPrice',
+      });
+    }
+
+    // Filter by product availability
+    if (inStock !== undefined) {
+      if (inStock !== 'true' && inStock !== 'false') {
+        return res.status(400).json({
+          error: 'inStock must be true or false',
+        });
+      }
+
+      where.stock = inStock === 'true'
+      ? { [Op.gt]: 0 }
+      : 0;
+    }
+
+    // Query the database using the selected filters.
+    const products = await Product.findAll({
+      where,
+      order: [['id', 'ASC']],
+    });
+
+    res.json(products);
+  } catch (error) {
+    console.error('Error searching products:', error);
+
+    res.status(500).json({
+      error: 'Failed to search products',
+    });
+  }
+});
 
 // GET one product
 app.get('/api/products/:id', async (req, res) => {
