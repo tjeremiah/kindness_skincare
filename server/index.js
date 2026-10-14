@@ -9,6 +9,40 @@ const PORT = 3001;
 // Middleware
 app.use(express.json());
 
+function validateProduct(data) {
+  const { name, price, stock, description } = data;
+
+  if (typeof name !== 'string' || name.trim() === '') {
+    return 'Product name is required';
+  }
+
+  if (typeof description !== 'string' || description.trim() === '') {
+    return 'Product description is required';
+  }
+
+  if (
+    price === undefined || 
+    price === null ||
+    price === '' ||
+    !Number.isFinite(Number(price)) ||
+    Number(price) <= 0
+  ) {
+    return 'Price must be a number greater than zero';
+  }
+
+  if (
+    stock === undefined ||
+    stock === null ||
+    stock === '' ||
+    !Number.isInteger(Number(stock)) ||
+    Number(stock) < 0
+  ) {
+    return 'Stock must be non-negative whole number';
+  }
+
+  return null;
+}
+
 // Test route
 app.get('/', (req, res) => {
   res.send('Kindness Skincare API is running!');
